@@ -1,0 +1,187 @@
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
+#include <iostream>
+#include <string>
+
+/*enum ActionType {insertText, deleteText};
+class functions
+{
+public:
+    functions();
+};
+class Action{
+public:
+    ActionType getType(){return kind;}
+    std::string getText(){return text;}
+    std::uint32_t getPosition(){return position;}
+private:
+    std::string text;
+    std::uint32_t position;
+    ActionType kind;
+};
+
+class Insert: Action{
+public:
+    void insertText(std::string &text, std::uint32_t position);
+};
+
+class Delete: Action{
+public:
+    void deleteText(std::uint32_t position, std::uint32_t count);
+};*/
+
+class Composition{
+public:
+    Composition();
+    Composition(const Composition &comp);
+    Composition(char *Name, char *Author, std::int32_t feelMood, std::int32_t speedMood);
+    ~Composition();
+    char *getName() const {return compName;};
+    char *getAuthor() const {return compAuthor;};
+    std::int32_t getFeelMood() const {return compFeelMood;}
+    std:: int32_t getSpeedMood() const {return compSpeedMood;}
+private:
+    char *compName;
+    char *compAuthor;
+    std::int32_t compFeelMood;
+    std::int32_t compSpeedMood;
+};
+
+class Playlist{
+public:
+    Playlist();
+    Playlist(const Playlist &obj);
+    ~Playlist();
+    void add(const Composition &obj);
+    void del(uint32_t position);
+    void insert(uint32_t position, const Composition &obj);
+    void set(uint32_t position, const Composition &obj);
+    Composition &getData(uint32_t position) const;
+    uint32_t getCount() const {return count;}
+private:
+    Composition *objects;
+    uint32_t count;
+    uint32_t allocated;
+    void grow();
+};
+
+#endif // FUNCTIONS_H
+
+
+
+//cpp
+
+
+#include "functions.h"
+
+#define _DEBUG
+Composition::Composition(){
+    compName = NULL;
+    compAuthor = NULL;
+    compFeelMood = NULL;
+    compSpeedMood = NULL;
+}
+
+Composition::Composition(const Composition &comp){
+    compName = comp.compName;
+    compAuthor = comp.compAuthor;
+    compFeelMood = comp.compFeelMood;
+    compSpeedMood = comp.compSpeedMood;
+}
+
+Composition::Composition(char *Name, char *Author, std::int32_t feelMood, std::int32_t speedMood){
+    compName = Name;
+    compAuthor = Author;
+    compFeelMood = feelMood;
+    compSpeedMood = speedMood;
+}
+
+Playlist::Playlist(){
+    objects = NULL;
+    count = 0;
+    allocated = 0;
+}
+
+Playlist::Playlist(const Playlist &obj){
+    count = obj.getCount();
+    objects = new Composition[count];
+    allocated = count;
+    for (uint32_t i = 0; i < count; i++){
+        Composition c = obj.getData(i);
+        objects[i] = Composition(c.getName(), c.getAuthor(), c.getFeelMood(), c.getSpeedMood());
+    }
+}
+
+Playlist::~Playlist(){
+    if (allocated){
+        delete [] objects;
+    }
+}
+
+Composition &Playlist::getData(std::uint32_t position) const{
+    if(position < 0 || position >= count){
+        position = 0;
+    }
+    return objects[position];
+}
+
+void Playlist::grow(){
+    Composition *comp = new Composition[count + 2];
+    for(uint32_t i = 0; i < count; i++){
+        comp[i] = Composition(objects[i]);
+    }
+    delete [] objects;
+    objects = comp;
+    allocated += 4;
+}
+
+void Playlist::insert(uint32_t position, const Composition &obj){
+    if(++count >= allocated){
+        grow();
+    }
+    for (uint32_t i = count; i > position; i--){
+        objects[i] = objects[i - 1];
+    }
+    objects[position] = obj;
+}
+
+void Playlist::add(const Composition &obj){
+    if(count >= allocated){
+        grow();
+    }
+    objects[count++] = obj;
+}
+
+void Playlist::set(uint32_t position, const Composition &obj){
+    if (position >= count){
+#ifdef _DEBUG
+        std::cout << "Impossible";
+#endif
+    }
+    else {
+        objects[position] = obj;
+    }
+}
+
+void Playlist::del(uint32_t position)
+{
+    if (position >= count){
+#ifndef _DEBUG
+        std::cout<<"Impossible";
+#endif
+    }
+    else{
+        Composition *comp = new Composition[count];
+        for (uint32_t i = position; i < count - 1; i ++){
+            objects[i] = objects[i + 1];
+        }
+        for (uint32_t i = 0; i < count - 1; i ++){
+            Composition c = objects[i];
+            comp[i] = Composition(c.getName(), c.getAuthor(), c.getFeelMood(), c.getSpeedMood());
+        }
+        delete  [] objects;
+        objects = comp;
+        count--;
+
+    }
+}
